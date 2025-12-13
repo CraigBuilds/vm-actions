@@ -117,7 +117,7 @@ source "qemu" "vm" {
   ssh_private_key_file = var.ssh_private_key_file
   ssh_timeout          = "10m"
 
-  shutdown_command = "sudo shutdown -P now"
+  shutdown_command = "shutdown -P now"
 }
 
 build {
