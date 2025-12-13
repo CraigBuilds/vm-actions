@@ -78,6 +78,12 @@ variable "ssh_private_key_file" {
   sensitive   = true
 }
 
+variable "shutdown_command" {
+  type        = string
+  description = "Command to shut down the VM after provisioning (varies by OS)"
+  default     = "echo 'Packer shutdown triggered'"
+}
+
 source "qemu" "vm" {
   iso_url      = var.input_image
   iso_checksum = "none"
@@ -117,7 +123,7 @@ source "qemu" "vm" {
   ssh_private_key_file = var.ssh_private_key_file
   ssh_timeout          = "10m"
 
-  shutdown_command = "shutdown -P now"
+  shutdown_command = var.shutdown_command
 }
 
 build {

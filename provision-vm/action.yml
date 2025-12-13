@@ -45,6 +45,10 @@ inputs:
     description: 'SSH private key content for Packer to connect (will be written to a temporary file)'
     required: false
     default: ''
+  shutdown_command:
+    description: 'Command to shut down the VM (varies by OS, e.g., "poweroff" for Alpine, "sudo shutdown -P now" for Ubuntu)'
+    required: false
+    default: 'echo "Packer shutdown triggered"'
 
 runs:
   using: 'composite'
@@ -132,6 +136,7 @@ runs:
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "shutdown_command=${{ inputs.shutdown_command }}" \
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           ${{ github.action_path }}/../template.pkr.hcl
 
@@ -156,6 +161,7 @@ runs:
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "shutdown_command=${{ inputs.shutdown_command }}" \
           -var "inline_provision_commands=$INLINE_PROVISION_COMMANDS" \
           ${{ github.action_path }}/../template.pkr.hcl
 
@@ -178,6 +184,7 @@ runs:
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "shutdown_command=${{ inputs.shutdown_command }}" \
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           ${{ github.action_path }}/../template.pkr.hcl
 
@@ -202,6 +209,7 @@ runs:
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "shutdown_command=${{ inputs.shutdown_command }}" \
           -var "inline_provision_commands=$INLINE_PROVISION_COMMANDS" \
           ${{ github.action_path }}/../template.pkr.hcl
 
