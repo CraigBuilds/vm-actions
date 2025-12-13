@@ -71,6 +71,12 @@ variable "ssh_public_key" {
   default     = ""
 }
 
+variable "user_groups" {
+  type        = string
+  description = "Comma-separated list of groups for the user (e.g., 'sudo' for Ubuntu, 'wheel' for Alpine)"
+  default     = "sudo"
+}
+
 variable "ssh_private_key_file" {
   type        = string
   description = "Path to SSH private key file for Packer to connect"
@@ -112,6 +118,7 @@ source "qemu" "vm" {
       password       = var.password
       hostname       = var.hostname
       ssh_public_key = var.ssh_public_key
+      user_groups    = var.user_groups
     })
     "/meta-data" = templatefile("${path.root}/cloud-init/meta-data", {
       hostname = var.hostname

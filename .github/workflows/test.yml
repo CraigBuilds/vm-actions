@@ -37,6 +37,7 @@ jobs:
           hostname: 'test-vm'
           ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
           ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+          user_groups: 'wheel'
           shutdown_command: 'doas /sbin/poweroff'
 
       - name: Check VM size

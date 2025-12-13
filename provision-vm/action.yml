@@ -45,6 +45,10 @@ inputs:
     description: 'SSH private key content for Packer to connect (will be written to a temporary file)'
     required: false
     default: ''
+  user_groups:
+    description: 'Comma-separated list of groups for the user (e.g., "sudo" for Ubuntu, "wheel" for Alpine)'
+    required: false
+    default: 'sudo'
   shutdown_command:
     description: 'Command to shut down the VM (varies by OS, e.g., "doas /sbin/poweroff" for Alpine, "sudo shutdown -P now" for Ubuntu)'
     required: false
@@ -136,6 +140,7 @@ runs:
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "user_groups=${{ inputs.user_groups }}" \
           -var "shutdown_command=${{ inputs.shutdown_command }}" \
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           ${{ github.action_path }}/../template.pkr.hcl
@@ -161,6 +166,7 @@ runs:
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "user_groups=${{ inputs.user_groups }}" \
           -var "shutdown_command=${{ inputs.shutdown_command }}" \
           -var "inline_provision_commands=$INLINE_PROVISION_COMMANDS" \
           ${{ github.action_path }}/../template.pkr.hcl
@@ -184,6 +190,7 @@ runs:
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "user_groups=${{ inputs.user_groups }}" \
           -var "shutdown_command=${{ inputs.shutdown_command }}" \
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           ${{ github.action_path }}/../template.pkr.hcl
@@ -209,6 +216,7 @@ runs:
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "user_groups=${{ inputs.user_groups }}" \
           -var "shutdown_command=${{ inputs.shutdown_command }}" \
           -var "inline_provision_commands=$INLINE_PROVISION_COMMANDS" \
           ${{ github.action_path }}/../template.pkr.hcl
