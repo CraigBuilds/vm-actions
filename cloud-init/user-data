@@ -14,10 +14,6 @@ users:
 hostname: ${hostname}
 manage_etc_hosts: true
 
-# Update packages on first boot
-package_update: true
-package_upgrade: false
-
 # Configure SSH
 ssh_pwauth: true
 disable_root: false
