@@ -95,11 +95,13 @@ runs:
     - name: Validate provisioning inputs
       shell: bash
       run: |
-        if [ -z "${{ inputs.input_provision_script }}" ] && [ -z "${{ inputs.inline_provision_commands }}" ]; then
+        SCRIPT="${{ inputs.input_provision_script }}"
+        COMMANDS="${{ inputs.inline_provision_commands }}"
+        if [ -z "$SCRIPT" ] && [ -z "$COMMANDS" ]; then
           echo "Error: Either input_provision_script or inline_provision_commands must be provided"
           exit 1
         fi
-        if [ -n "${{ inputs.input_provision_script }}" ] && [ -n "${{ inputs.inline_provision_commands }}" ]; then
+        if [ -n "$SCRIPT" ] && [ -n "$COMMANDS" ]; then
           echo "Error: Only one of input_provision_script or inline_provision_commands should be provided"
           exit 1
         fi
