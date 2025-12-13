@@ -73,7 +73,7 @@ variable "ssh_public_key" {
 
 variable "user_groups" {
   type        = string
-  description = "Comma-separated list of groups for the user (e.g., 'sudo' for Ubuntu, 'wheel' for Alpine)"
+  description = "Groups for the user in YAML array format (e.g., 'sudo' or 'wheel' or 'sudo, wheel' for multiple groups)"
   default     = "sudo"
 }
 
