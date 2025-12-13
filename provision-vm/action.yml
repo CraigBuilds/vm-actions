@@ -36,14 +36,26 @@ inputs:
     description: 'SSH public key for authentication'
     required: false
     default: ''
-  ssh_private_key_file:
-    description: 'Path to SSH private key file for Packer to connect'
+  ssh_private_key:
+    description: 'SSH private key content for Packer to connect (will be written to a temporary file)'
     required: false
-    default: 'Packer/keys/packer_ed25519'
+    default: ''
 
 runs:
   using: 'composite'
   steps:
+    - name: Prepare SSH private key
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.ssh_private_key }}" ]; then
+          mkdir -p /tmp/packer-ssh-keys
+          echo "${{ inputs.ssh_private_key }}" > /tmp/packer-ssh-keys/packer_key
+          chmod 600 /tmp/packer-ssh-keys/packer_key
+          echo "SSH_PRIVATE_KEY_FILE=/tmp/packer-ssh-keys/packer_key" >> $GITHUB_ENV
+        else
+          echo "SSH_PRIVATE_KEY_FILE=Packer/keys/packer_ed25519" >> $GITHUB_ENV
+        fi
+
     - name: Initialize Packer template
       shell: bash
       run: packer init ${{ github.action_path }}/../template.pkr.hcl
@@ -62,7 +74,7 @@ runs:
           -var "password=${{ inputs.password }}" \
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
-          -var "ssh_private_key_file=${{ inputs.ssh_private_key_file }}" \
+          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
           ${{ github.action_path }}/../template.pkr.hcl
 
     - name: Build VM with Packer
@@ -79,5 +91,5 @@ runs:
           -var "password=${{ inputs.password }}" \
           -var "hostname=${{ inputs.hostname }}" \
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
-          -var "ssh_private_key_file=${{ inputs.ssh_private_key_file }}" \
+          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
           ${{ github.action_path }}/../template.pkr.hcl
