@@ -92,19 +92,19 @@ runs:
           echo "SSH_PRIVATE_KEY_FILE=Packer/keys/packer_ed25519" >> $GITHUB_ENV
         fi
 
-    - name: Validate provisioning inputs
+    - name: Validate that at least one provisioning method is provided
+      if: inputs.input_provision_script == '' && inputs.inline_provision_commands == ''
       shell: bash
       run: |
-        SCRIPT="${{ inputs.input_provision_script }}"
-        COMMANDS="${{ inputs.inline_provision_commands }}"
-        if [ -z "$SCRIPT" ] && [ -z "$COMMANDS" ]; then
-          echo "Error: Either input_provision_script or inline_provision_commands must be provided"
-          exit 1
-        fi
-        if [ -n "$SCRIPT" ] && [ -n "$COMMANDS" ]; then
-          echo "Error: Only one of input_provision_script or inline_provision_commands should be provided"
-          exit 1
-        fi
+        echo "::error::Either input_provision_script or inline_provision_commands must be provided"
+        exit 1
+
+    - name: Validate that only one provisioning method is provided
+      if: inputs.input_provision_script != '' && inputs.inline_provision_commands != ''
+      shell: bash
+      run: |
+        echo "::error::Only one of input_provision_script or inline_provision_commands should be provided"
+        exit 1
 
     - name: Initialize Packer template
       shell: bash
