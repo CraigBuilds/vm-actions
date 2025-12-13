@@ -29,7 +29,7 @@ variable "input_provision_script" {
 
 variable "build_name" {
   type        = string
-  description = "Descriptive name for this build (shown in Packer logs and build metadata)"
+  description = "Descriptive name for this build (shown in Packer logs)"
   default     = "vm-build"
 }
 
