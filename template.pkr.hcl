@@ -41,7 +41,7 @@ variable "disk_compression" {
 
 variable "username" {
   type        = string
-  description = "Username for SSH access and cloud-init"
+  description = "Username for the VM user account (used for SSH access during build and for local login on the built VM)"
   default     = "packer"
 }
 

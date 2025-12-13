@@ -21,7 +21,7 @@ inputs:
     required: false
     default: 'false'
   username:
-    description: 'Username for SSH access and cloud-init'
+    description: 'Username for the VM user account (used for SSH access during build and for local login on the built VM)'
     required: false
     default: 'packer'
   password:
