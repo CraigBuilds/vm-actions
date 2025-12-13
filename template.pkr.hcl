@@ -47,7 +47,7 @@ variable "username" {
 
 variable "password" {
   type        = string
-  description = "Password for the user (use plain text or a hash from mkpasswd/openssl, e.g., mkpasswd -m sha-512)"
+  description = "Password for the user. You may provide a plain text password or a SHA-512 crypt hash (recommended for security). To generate a compatible hash, use: mkpasswd -m sha-512. See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#set-passwords for details on supported hash formats."
   default     = ""
   sensitive   = true
 }
