@@ -15,8 +15,28 @@ All required dependencies (Packer, QEMU, and xorriso) are automatically installe
 
 # Actions
 
+# Actions
+
 ## provision-vm
-todo
+
+Provisions a VM image using Packer and QEMU. Takes a base cloud image (such as Ubuntu Cloud Images), boots it with cloud-init configuration, and runs provisioning commands or scripts to customize the VM.
+
+### Inputs
+
+- `input_image` (required): URL or path to the input base image (cloud image or existing QCOW2)
+- `output_directory` (required): Directory where the build output will be stored
+- `output_name` (required): Name of the output VM file
+- `build_name` (required): Descriptive name for this build (displayed in Packer logs)
+- `input_provision_script` (optional): Path to a provisioning script file to run
+- `inline_provision_commands` (optional): Inline shell commands to run for provisioning
+- `disk_compression` (optional, default: false): Enable qcow2 internal compression during Packer compaction
+- `username` (optional, default: packer): Username for the VM user account
+- `password` (optional): Password for the user (plain text or hash from mkpasswd)
+- `hostname` (optional, default: vm-host): Hostname for the VM
+- `ssh_public_key` (optional): SSH public key for authentication
+- `ssh_private_key` (optional): SSH private key content for Packer to connect
+
+**Note**: You must provide either `input_provision_script` OR `inline_provision_commands`, but not both.
 
 ## compress-vm
 todo
@@ -28,7 +48,129 @@ todo
 todo
 
 # Example use
-todo
+
+## Example 1: Basic provisioning with inline commands
+
+```yaml
+name: Build VM with inline provisioning
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate SSH key pair
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
+          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
+          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          cat ~/.ssh/packer_key >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Provision VM
+        uses: CraigBuilds/vm-actions/provision-vm@main
+        with:
+          input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
+          output_directory: './output'
+          output_name: 'my-vm.qcow2'
+          build_name: 'ubuntu-22.04-custom'
+          inline_provision_commands: |
+            sudo apt-get update
+            sudo apt-get install -y nginx
+            sudo systemctl enable nginx
+          username: 'ubuntu'
+          password: 'ubuntu'
+          hostname: 'web-server'
+          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
+          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+```
+
+## Example 2: Provisioning with a script file
+
+```yaml
+name: Build VM with script provisioning
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate SSH key pair
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
+          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
+          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          cat ~/.ssh/packer_key >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Provision VM
+        uses: CraigBuilds/vm-actions/provision-vm@main
+        with:
+          input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
+          output_directory: './output'
+          output_name: 'my-vm.qcow2'
+          build_name: 'ubuntu-22.04-custom'
+          input_provision_script: './scripts/provision.sh'
+          username: 'ubuntu'
+          hostname: 'custom-vm'
+          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
+          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+```
+
+Where `scripts/provision.sh` might contain:
+
+```bash
+#!/bin/bash
+set -e
+
+# Update system packages
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# Install common tools
+sudo apt-get install -y \
+  vim \
+  curl \
+  git \
+  htop
+
+# Configure firewall
+sudo ufw allow 22/tcp
+sudo ufw --force enable
+
+echo "Provisioning complete!"
+```
+
+## Example 3: Multi-package installation with inline commands
+
+```yaml
+- name: Provision development VM
+  uses: CraigBuilds/vm-actions/provision-vm@main
+  with:
+    input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
+    output_directory: './output'
+    output_name: 'dev-vm.qcow2'
+    build_name: 'dev-environment'
+    inline_provision_commands: |
+      sudo apt-get update
+      sudo apt-get install -y build-essential git curl wget
+      curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+      sudo apt-get install -y nodejs
+      node --version
+      npm --version
+    username: 'developer'
+    hostname: 'dev-box'
+    ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+    ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+```
 
 # Multi Stage Pipelines
 
