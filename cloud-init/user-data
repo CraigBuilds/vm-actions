@@ -7,14 +7,12 @@ write_files:
   - path: /etc/doas.conf
     content: |
       permit nopass :wheel
-      permit nopass ${username}
     permissions: '0600'
 
 users:
   - name: ${username}
-    groups: [sudo, wheel]
+    groups: [wheel]
     shell: /bin/bash
-    sudo: ['ALL=(ALL) NOPASSWD:ALL']
     lock_passwd: false%{ if password != "" }
     passwd: ${password}%{ endif }
     %{ if ssh_public_key != "" }
