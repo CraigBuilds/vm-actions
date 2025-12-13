@@ -42,6 +42,7 @@ jobs:
           hostname: 'ubuntu-desktop-test'
           ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
           ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+          shutdown_command: 'sudo shutdown -P now'
 
       - name: Check VM size
         run: |
