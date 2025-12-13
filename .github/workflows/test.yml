@@ -28,11 +28,9 @@ jobs:
           output_name: 'alpine-test.qcow2'
           build_name: 'alpine-test-build'
           inline_provision_commands: |
-            sudo apk update
-            sudo apk add curl vim
+            sudo apk update && sudo apk add curl vim
             echo "Test provisioning complete!"
           username: 'alpine'
-          password: 'alpine'
           hostname: 'test-vm'
           ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
           ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
