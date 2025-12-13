@@ -43,13 +43,13 @@ runs:
     - name: Check and install QEMU dependencies
       shell: bash
       run: |
-        MISSING=""
-        command -v qemu-system-x86_64 &> /dev/null || MISSING="$MISSING qemu-system-x86"
-        command -v xorriso &> /dev/null || MISSING="$MISSING xorriso"
-        if [ -n "$MISSING" ]; then
-          echo "Installing missing dependencies:$MISSING"
+        PACKAGES=()
+        command -v qemu-system-x86_64 &> /dev/null || PACKAGES+=("qemu-system-x86")
+        command -v xorriso &> /dev/null || PACKAGES+=("xorriso")
+        if [ ${#PACKAGES[@]} -gt 0 ]; then
+          echo "Installing missing dependencies: ${PACKAGES[*]}"
           sudo apt-get update -qq
-          sudo apt-get install -y -qq $MISSING
+          sudo apt-get install -y -qq "${PACKAGES[@]}"
         else
           echo "All dependencies already installed"
         fi
