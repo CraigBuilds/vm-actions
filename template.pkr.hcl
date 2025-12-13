@@ -62,8 +62,8 @@ source "qemu" "vm" {
   cpus   = 2
 
   cd_files = [
-    "Packer/cloud_init/user-data",
-    "Packer/cloud_init/meta-data",
+    "cloud_init/user-data",
+    "cloud_init/meta-data",
   ]
   cd_label = "cidata"
 
