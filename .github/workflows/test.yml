@@ -31,6 +31,7 @@ jobs:
           build_name: 'alpine-test-build'
           inline_provision_commands: |
             sudo apk update && sudo apk add curl vim
+            echo "This VM was provisioned by Packer on $(date)" > ~/provisioned_by_packer
             echo "Test provisioning complete!"
           username: 'alpine'
           hostname: 'test-vm'
