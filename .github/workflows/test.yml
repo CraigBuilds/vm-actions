@@ -30,14 +30,15 @@ jobs:
           output_name: 'alpine-test.qcow2'
           build_name: 'alpine-test-build'
           inline_provision_commands: |
-            apk update && apk add curl vim
+            doas apk update && doas apk add curl vim
             echo "This VM was provisioned by Packer on $(date)" > ~/provisioned_by_packer
             echo "Test provisioning complete!"
           username: 'alpine'
           hostname: 'test-vm'
           ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
           ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
-          shutdown_command: '/sbin/poweroff'
+          user_groups: 'wheel'
+          shutdown_command: 'doas /sbin/poweroff'
 
       - name: Check VM size
         run: |
