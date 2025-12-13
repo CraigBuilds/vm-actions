@@ -131,11 +131,11 @@ runs:
           -var ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}"
         
         if [ -n "$INPUT_PROVISION_SCRIPT" ]; then
-          PACKER_VARS="$PACKER_VARS -var input_provision_script=$INPUT_PROVISION_SCRIPT"
+          PACKER_VARS="$PACKER_VARS -var input_provision_script='$INPUT_PROVISION_SCRIPT'"
         fi
         
         if [ -n "$INLINE_PROVISION_COMMANDS" ]; then
-          PACKER_VARS="$PACKER_VARS -var inline_provision_commands=$INLINE_PROVISION_COMMANDS"
+          PACKER_VARS="$PACKER_VARS -var inline_provision_commands='$INLINE_PROVISION_COMMANDS'"
         fi
         
         packer validate $PACKER_VARS ${{ github.action_path }}/../template.pkr.hcl
@@ -158,11 +158,11 @@ runs:
           -var ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}"
         
         if [ -n "$INPUT_PROVISION_SCRIPT" ]; then
-          PACKER_VARS="$PACKER_VARS -var input_provision_script=$INPUT_PROVISION_SCRIPT"
+          PACKER_VARS="$PACKER_VARS -var input_provision_script='$INPUT_PROVISION_SCRIPT'"
         fi
         
         if [ -n "$INLINE_PROVISION_COMMANDS" ]; then
-          PACKER_VARS="$PACKER_VARS -var inline_provision_commands=$INLINE_PROVISION_COMMANDS"
+          PACKER_VARS="$PACKER_VARS -var inline_provision_commands='$INLINE_PROVISION_COMMANDS'"
         fi
         
         packer build $PACKER_VARS ${{ github.action_path }}/../template.pkr.hcl
