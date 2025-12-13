@@ -86,7 +86,7 @@ runs:
           mkdir -p /tmp/packer-ssh-keys
           chmod 700 /tmp/packer-ssh-keys
           cat > /tmp/packer-ssh-keys/packer_key << 'EOF'
-${{ inputs.ssh_private_key }}
+        ${{ inputs.ssh_private_key }}
         EOF
           chmod 600 /tmp/packer-ssh-keys/packer_key
           echo "SSH_PRIVATE_KEY_FILE=/tmp/packer-ssh-keys/packer_key" >> $GITHUB_ENV
