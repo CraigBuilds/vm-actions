@@ -62,8 +62,8 @@ source "qemu" "vm" {
   cpus   = 2
 
   cd_files = [
-    "cloud_init/user-data",
-    "cloud_init/meta-data",
+    #"cloud_init/user-data", #todo use the templatefile() function 
+    #"cloud_init/meta-data",#todo use the templatefile() function 
   ]
   cd_label = "cidata"
 
