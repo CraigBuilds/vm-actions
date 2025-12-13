@@ -44,6 +44,36 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Check if Packer is already installed
+      id: check-packer
+      shell: bash
+      run: |
+        if command -v packer &> /dev/null; then
+          echo "installed=true" >> $GITHUB_OUTPUT
+          echo "Packer is already installed ($(packer version))"
+        else
+          echo "installed=false" >> $GITHUB_OUTPUT
+          echo "Packer is not installed"
+        fi
+
+    - name: Setup Packer
+      if: steps.check-packer.outputs.installed != 'true'
+      uses: hashicorp/setup-packer@v3.1.0
+
+    - name: Check and install QEMU dependencies
+      shell: bash
+      run: |
+        PACKAGES=()
+        command -v qemu-system-x86_64 &> /dev/null || PACKAGES+=("qemu-system-x86")
+        command -v xorriso &> /dev/null || PACKAGES+=("xorriso")
+        if [ ${#PACKAGES[@]} -gt 0 ]; then
+          echo "Installing missing dependencies: ${PACKAGES[*]}"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq "${PACKAGES[@]}"
+        else
+          echo "All dependencies already installed"
+        fi
+
     - name: Prepare SSH private key
       shell: bash
       run: |
