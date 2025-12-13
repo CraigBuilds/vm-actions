@@ -1,0 +1,23 @@
+#cloud-config
+users:
+  - name: ${username}
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    lock_passwd: false%{ if password != "" }
+    passwd: ${password}%{ endif }
+    %{ if ssh_public_key != "" }
+    ssh_authorized_keys:
+      - ${ssh_public_key}%{ endif }
+
+# Set hostname
+hostname: ${hostname}
+manage_etc_hosts: true
+
+# Update packages on first boot
+package_update: true
+package_upgrade: false
+
+# Configure SSH
+ssh_pwauth: true
+disable_root: false

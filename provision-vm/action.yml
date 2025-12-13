@@ -20,13 +20,48 @@ inputs:
     description: 'Enable qcow2 internal compression during Packer compaction (may slow builds)'
     required: false
     default: 'false'
+  username:
+    description: 'Username for the VM user account (used for SSH access during build and for local login on the built VM)'
+    required: false
+    default: 'packer'
+  password:
+    description: 'Password for the user (use plain text or a hash from mkpasswd/openssl, e.g., mkpasswd -m sha-512)'
+    required: false
+    default: ''
+  hostname:
+    description: 'Hostname for the VM'
+    required: false
+    default: 'vm-host'
+  ssh_public_key:
+    description: 'SSH public key for authentication'
+    required: false
+    default: ''
+  ssh_private_key:
+    description: 'SSH private key content for Packer to connect (will be written to a temporary file)'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
   steps:
+    - name: Prepare SSH private key
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.ssh_private_key }}" ]; then
+          mkdir -p /tmp/packer-ssh-keys
+          chmod 700 /tmp/packer-ssh-keys
+          cat > /tmp/packer-ssh-keys/packer_key << 'EOF'
+${{ inputs.ssh_private_key }}
+        EOF
+          chmod 600 /tmp/packer-ssh-keys/packer_key
+          echo "SSH_PRIVATE_KEY_FILE=/tmp/packer-ssh-keys/packer_key" >> $GITHUB_ENV
+        else
+          echo "SSH_PRIVATE_KEY_FILE=Packer/keys/packer_ed25519" >> $GITHUB_ENV
+        fi
+
     - name: Initialize Packer template
       shell: bash
-      run: packer init Packer/templates/packer-vm.pkr.hcl
+      run: packer init ${{ github.action_path }}/../template.pkr.hcl
 
     - name: Validate Packer template
       shell: bash
@@ -38,7 +73,12 @@ runs:
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           -var "build_name=${{ inputs.build_name }}" \
           -var "disk_compression=${{ inputs.disk_compression }}" \
-          Packer/templates/packer-vm.pkr.hcl
+          -var "username=${{ inputs.username }}" \
+          -var "password=${{ inputs.password }}" \
+          -var "hostname=${{ inputs.hostname }}" \
+          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
+          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          ${{ github.action_path }}/../template.pkr.hcl
 
     - name: Build VM with Packer
       shell: bash
@@ -50,4 +90,16 @@ runs:
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           -var "build_name=${{ inputs.build_name }}" \
           -var "disk_compression=${{ inputs.disk_compression }}" \
-          Packer/templates/packer-vm.pkr.hcl
+          -var "username=${{ inputs.username }}" \
+          -var "password=${{ inputs.password }}" \
+          -var "hostname=${{ inputs.hostname }}" \
+          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
+          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          ${{ github.action_path }}/../template.pkr.hcl
+
+    - name: Cleanup SSH private key
+      if: always()
+      shell: bash
+      run: |
+        rm -f /tmp/packer-ssh-keys/packer_key
+        rmdir --ignore-fail-on-non-empty /tmp/packer-ssh-keys 2>/dev/null || true
