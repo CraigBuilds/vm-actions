@@ -11,7 +11,7 @@ We assume that the source image has cloud-init and SSH already installed. Packer
 
 This repository also hosts tools to convert the qcow2 image into formats compatible with virtualbox, proxmox and hyper-v.
 
-Packer is automatically installed when you use these actions (via the official HashiCorp setup-packer action). You must install qemu-system-x86 and xorriso into the runner before using these actions. 
+All required dependencies (Packer, QEMU, and xorriso) are automatically installed when you use these actions. 
 
 # Actions
 

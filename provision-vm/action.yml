@@ -40,6 +40,20 @@ runs:
       if: steps.check-packer.outputs.installed != 'true'
       uses: hashicorp/setup-packer@v3.1.0
 
+    - name: Check and install QEMU dependencies
+      shell: bash
+      run: |
+        MISSING=""
+        command -v qemu-system-x86_64 &> /dev/null || MISSING="$MISSING qemu-system-x86"
+        command -v xorriso &> /dev/null || MISSING="$MISSING xorriso"
+        if [ -n "$MISSING" ]; then
+          echo "Installing missing dependencies:$MISSING"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq$MISSING
+        else
+          echo "All dependencies already installed"
+        fi
+
     - name: Initialize Packer template
       shell: bash
       run: packer init Packer/templates/packer-vm.pkr.hcl
