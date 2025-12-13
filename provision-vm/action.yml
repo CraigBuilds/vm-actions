@@ -20,13 +20,33 @@ inputs:
     description: 'Enable qcow2 internal compression during Packer compaction (may slow builds)'
     required: false
     default: 'false'
+  username:
+    description: 'Username for SSH access and cloud-init'
+    required: false
+    default: 'packer'
+  password:
+    description: 'Password for the user (hashed or plain text)'
+    required: false
+    default: ''
+  hostname:
+    description: 'Hostname for the VM'
+    required: false
+    default: 'vm-host'
+  ssh_public_key:
+    description: 'SSH public key for authentication'
+    required: false
+    default: ''
+  ssh_private_key_file:
+    description: 'Path to SSH private key file for Packer to connect'
+    required: false
+    default: 'Packer/keys/packer_ed25519'
 
 runs:
   using: 'composite'
   steps:
     - name: Initialize Packer template
       shell: bash
-      run: packer init Packer/templates/packer-vm.pkr.hcl
+      run: packer init ${{ github.action_path }}/../template.pkr.hcl
 
     - name: Validate Packer template
       shell: bash
@@ -38,7 +58,12 @@ runs:
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           -var "build_name=${{ inputs.build_name }}" \
           -var "disk_compression=${{ inputs.disk_compression }}" \
-          Packer/templates/packer-vm.pkr.hcl
+          -var "username=${{ inputs.username }}" \
+          -var "password=${{ inputs.password }}" \
+          -var "hostname=${{ inputs.hostname }}" \
+          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
+          -var "ssh_private_key_file=${{ inputs.ssh_private_key_file }}" \
+          ${{ github.action_path }}/../template.pkr.hcl
 
     - name: Build VM with Packer
       shell: bash
@@ -50,4 +75,9 @@ runs:
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           -var "build_name=${{ inputs.build_name }}" \
           -var "disk_compression=${{ inputs.disk_compression }}" \
-          Packer/templates/packer-vm.pkr.hcl
+          -var "username=${{ inputs.username }}" \
+          -var "password=${{ inputs.password }}" \
+          -var "hostname=${{ inputs.hostname }}" \
+          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
+          -var "ssh_private_key_file=${{ inputs.ssh_private_key_file }}" \
+          ${{ github.action_path }}/../template.pkr.hcl

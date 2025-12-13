@@ -39,6 +39,36 @@ variable "disk_compression" {
   default     = false
 }
 
+variable "username" {
+  type        = string
+  description = "Username for SSH access and cloud-init"
+  default     = "packer"
+}
+
+variable "password" {
+  type        = string
+  description = "Password for the user (hashed or plain text)"
+  default     = ""
+}
+
+variable "hostname" {
+  type        = string
+  description = "Hostname for the VM"
+  default     = "vm-host"
+}
+
+variable "ssh_public_key" {
+  type        = string
+  description = "SSH public key for authentication"
+  default     = ""
+}
+
+variable "ssh_private_key_file" {
+  type        = string
+  description = "Path to SSH private key file for Packer to connect"
+  default     = "Packer/keys/packer_ed25519"
+}
+
 source "qemu" "vm" {
   iso_url      = var.input_image
   iso_checksum = "none"
@@ -61,14 +91,21 @@ source "qemu" "vm" {
   memory = 2048
   cpus   = 2
 
-  cd_files = [
-    #"cloud_init/user-data", #todo use the templatefile() function 
-    #"cloud_init/meta-data",#todo use the templatefile() function 
-  ]
+  cd_content = {
+    "/user-data" = templatefile("${path.root}/cloud-init/user-data", {
+      username       = var.username
+      password       = var.password
+      hostname       = var.hostname
+      ssh_public_key = var.ssh_public_key
+    })
+    "/meta-data" = templatefile("${path.root}/cloud-init/meta-data", {
+      hostname = var.hostname
+    })
+  }
   cd_label = "cidata"
 
-  ssh_username         = "packer"
-  ssh_private_key_file = "Packer/keys/packer_ed25519"
+  ssh_username         = var.username
+  ssh_private_key_file = var.ssh_private_key_file
   ssh_timeout          = "10m"
 
   shutdown_command = "sudo shutdown -P now"
