@@ -125,7 +125,7 @@ build {
   sources = ["source.qemu.vm"]
 
   provisioner "shell" {
-    script = var.input_provision_script != null ? var.input_provision_script : null
-    inline = var.input_provision_script == null && var.inline_provision_commands != null ? [var.inline_provision_commands] : null
+    script = var.input_provision_script != null && var.input_provision_script != "" ? var.input_provision_script : null
+    inline = (var.input_provision_script == null || var.input_provision_script == "") && var.inline_provision_commands != null && var.inline_provision_commands != "" ? [var.inline_provision_commands] : null
   }
 }

@@ -15,8 +15,6 @@ All required dependencies (Packer, QEMU, and xorriso) are automatically installe
 
 # Actions
 
-# Actions
-
 ## provision-vm
 
 Provisions a VM image using Packer and QEMU. Takes a base cloud image (such as Ubuntu Cloud Images), boots it with cloud-init configuration, and runs provisioning commands or scripts to customize the VM.
