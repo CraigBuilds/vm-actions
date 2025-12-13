@@ -1,4 +1,6 @@
-name: Test VM Actions
+# This workflow tests building a quick, lightweight Alpine Linux VM
+# using the provision-vm action with inline provisioning commands.
+name: Test Build Alpine Linux VM
 
 on:
   workflow_dispatch:
