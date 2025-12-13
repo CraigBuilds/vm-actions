@@ -79,18 +79,21 @@ runs:
           echo "All dependencies already installed"
         fi
 
-    - name: Prepare SSH private key
+    - name: Prepare SSH private key file
+      if: inputs.ssh_private_key != ''
       shell: bash
       run: |
-        if [ -n "${{ inputs.ssh_private_key }}" ]; then
-          mkdir -p /tmp/packer-ssh-keys
-          chmod 700 /tmp/packer-ssh-keys
-          echo "${{ inputs.ssh_private_key }}" > /tmp/packer-ssh-keys/packer_key
-          chmod 600 /tmp/packer-ssh-keys/packer_key
-          echo "SSH_PRIVATE_KEY_FILE=/tmp/packer-ssh-keys/packer_key" >> $GITHUB_ENV
-        else
-          echo "SSH_PRIVATE_KEY_FILE=Packer/keys/packer_ed25519" >> $GITHUB_ENV
-        fi
+        mkdir -p /tmp/packer-ssh-keys
+        chmod 700 /tmp/packer-ssh-keys
+        echo "${{ inputs.ssh_private_key }}" > /tmp/packer-ssh-keys/packer_key
+        chmod 600 /tmp/packer-ssh-keys/packer_key
+        echo "SSH_PRIVATE_KEY_FILE=/tmp/packer-ssh-keys/packer_key" >> $GITHUB_ENV
+
+    - name: Set default SSH private key path
+      if: inputs.ssh_private_key == ''
+      shell: bash
+      run: |
+        echo "SSH_PRIVATE_KEY_FILE=Packer/keys/packer_ed25519" >> $GITHUB_ENV
 
     - name: Validate that at least one provisioning method is provided
       if: inputs.input_provision_script == '' && inputs.inline_provision_commands == ''
