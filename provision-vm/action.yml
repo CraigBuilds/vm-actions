@@ -24,6 +24,22 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Check if Packer is already installed
+      id: check-packer
+      shell: bash
+      run: |
+        if command -v packer &> /dev/null; then
+          echo "installed=true" >> $GITHUB_OUTPUT
+          echo "Packer is already installed ($(packer version))"
+        else
+          echo "installed=false" >> $GITHUB_OUTPUT
+          echo "Packer is not installed"
+        fi
+
+    - name: Setup Packer
+      if: steps.check-packer.outputs.installed != 'true'
+      uses: hashicorp/setup-packer@main
+
     - name: Initialize Packer template
       shell: bash
       run: packer init Packer/templates/packer-vm.pkr.hcl
