@@ -38,7 +38,7 @@ runs:
 
     - name: Setup Packer
       if: steps.check-packer.outputs.installed != 'true'
-      uses: hashicorp/setup-packer@main
+      uses: hashicorp/setup-packer@v3.1.0
 
     - name: Initialize Packer template
       shell: bash
