@@ -47,7 +47,7 @@ variable "username" {
 
 variable "password" {
   type        = string
-  description = "Password for the user (hashed or plain text)"
+  description = "Password for the user (use plain text or a hash from mkpasswd/openssl, e.g., mkpasswd -m sha-512)"
   default     = ""
 }
 
