@@ -1,5 +1,5 @@
 # vm-actions
-GitHub Actions for building, converting, and packaging VM images with Packer and QEMU
+GitHub Actions for building, converting, and packaging VM images with Packer, cloud-init, and QEMU
 
 # About Packer & QEMU
 
