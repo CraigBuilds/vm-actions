@@ -224,3 +224,5 @@ You can chain together multiple provision-vm actions to build VMs in stages, whe
 - [ ] Add parameterised "cloud-init" files (user-data and meta-data). The packer template will pass through the parameters to this.
 - [ ] SSH keys should come from Gitlab Secrets
 - [ ] Add option for inline provisioning scripts
+- [ ] Add docker example (pull docker container, boots into it, modifies it from within, commits the new container)
+- [ ] Add example CI jobs where the provisioning script is just used to test the container/VM, and not actually add things to it. 
