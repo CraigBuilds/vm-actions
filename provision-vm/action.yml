@@ -96,3 +96,10 @@ ${{ inputs.ssh_private_key }}
           -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
           ${{ github.action_path }}/../template.pkr.hcl
+
+    - name: Cleanup SSH private key
+      if: always()
+      shell: bash
+      run: |
+        rm -f /tmp/packer-ssh-keys/packer_key
+        rmdir --ignore-fail-on-non-empty /tmp/packer-ssh-keys 2>/dev/null || true
