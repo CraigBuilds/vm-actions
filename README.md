@@ -39,3 +39,4 @@ Chain together these actions to provision the VM in stages. For example... todo
 - [ ] Add a fully parameterized packer HCl template
 - [ ] Add parameterised "cloud-init" files (user-data and meta-data). The packer template will pass through the parameters to this.
 - [ ] SSH keys should come from Gitlab Secrets
+- [ ] Add option for inline provisioning scripts
