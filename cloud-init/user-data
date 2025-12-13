@@ -1,7 +1,18 @@
 #cloud-config
+# Install and configure doas for Alpine Linux
+packages:
+  - doas
+
+write_files:
+  - path: /etc/doas.conf
+    content: |
+      permit nopass :wheel
+      permit nopass ${username}
+    permissions: '0600'
+
 users:
   - name: ${username}
-    groups: sudo
+    groups: [sudo, wheel]
     shell: /bin/bash
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     lock_passwd: false%{ if password != "" }
