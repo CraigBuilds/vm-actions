@@ -4,10 +4,10 @@ users:
     groups: sudo
     shell: /bin/bash
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
-    lock_passwd: false
-    passwd: ${password}
+    lock_passwd: false%{ if password != "" }
+    passwd: ${password}%{ endif }%{ if ssh_public_key != "" }
     ssh_authorized_keys:
-      - ${ssh_public_key}
+      - ${ssh_public_key}%{ endif }
 
 # Set hostname
 hostname: ${hostname}
