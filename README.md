@@ -11,6 +11,8 @@ We assume at the source image has cloud-init and SSH already installed. Packer u
 
 This repository also hosts tools to convert the qcow2 image into formats compatible with virtualbox, proxmox and hyper-v.
 
+you must use the official hasicorp set up packer action to install packer into the runner before using these actions. You must also install qemu-system-x86 xorriso into the runner. 
+
 # Actions
 
 ## provision-vm
