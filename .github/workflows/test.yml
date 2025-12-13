@@ -30,7 +30,7 @@ jobs:
           output_name: 'alpine-test.qcow2'
           build_name: 'alpine-test-build'
           inline_provision_commands: |
-            apk update && apk add sudo curl vim
+            apk update && apk add curl vim
             echo "This VM was provisioned by Packer on $(date)" > ~/provisioned_by_packer
             echo "Test provisioning complete!"
           username: 'alpine'

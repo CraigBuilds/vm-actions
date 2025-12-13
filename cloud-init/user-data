@@ -1,4 +1,8 @@
 #cloud-config
+# Install essential packages at boot time
+packages:
+  - sudo
+
 users:
   - name: ${username}
     groups: sudo
