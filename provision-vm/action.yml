@@ -1,0 +1,53 @@
+name: 'Provision VM'
+description: 'Initializes, validates and builds a VM using Packer with the parameterized template'
+inputs:
+  input_image:
+    description: 'URL or path to the input base image (cloud image or existing QCOW2)'
+    required: true
+  output_directory:
+    description: 'Directory where the build output will be stored'
+    required: true
+  output_name:
+    description: 'Name of the output VM file'
+    required: true
+  input_provision_script:
+    description: 'Path to the provisioning script to run'
+    required: true
+  build_name:
+    description: 'Descriptive name for this build (displayed in Packer logs and build metadata, does not affect output files)'
+    required: true
+  disk_compression:
+    description: 'Enable qcow2 internal compression during Packer compaction (may slow builds)'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Initialize Packer template
+      shell: bash
+      run: packer init Packer/templates/packer-vm.pkr.hcl
+
+    - name: Validate Packer template
+      shell: bash
+      run: |
+        packer validate \
+          -var "input_image=${{ inputs.input_image }}" \
+          -var "output_directory=${{ inputs.output_directory }}" \
+          -var "output_name=${{ inputs.output_name }}" \
+          -var "input_provision_script=${{ inputs.input_provision_script }}" \
+          -var "build_name=${{ inputs.build_name }}" \
+          -var "disk_compression=${{ inputs.disk_compression }}" \
+          Packer/templates/packer-vm.pkr.hcl
+
+    - name: Build VM with Packer
+      shell: bash
+      run: |
+        packer build \
+          -var "input_image=${{ inputs.input_image }}" \
+          -var "output_directory=${{ inputs.output_directory }}" \
+          -var "output_name=${{ inputs.output_name }}" \
+          -var "input_provision_script=${{ inputs.input_provision_script }}" \
+          -var "build_name=${{ inputs.build_name }}" \
+          -var "disk_compression=${{ inputs.disk_compression }}" \
+          Packer/templates/packer-vm.pkr.hcl
