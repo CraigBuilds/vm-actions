@@ -39,6 +39,38 @@ variable "disk_compression" {
   default     = false
 }
 
+variable "username" {
+  type        = string
+  description = "Username for the VM user account (used for SSH access during build and for local login on the built VM)"
+  default     = "packer"
+}
+
+variable "password" {
+  type        = string
+  description = "Password for the user. You may provide a plain text password or a SHA-512 crypt hash (recommended for security). To generate a compatible hash, use: mkpasswd -m sha-512. See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#set-passwords for details on supported hash formats."
+  default     = ""
+  sensitive   = true
+}
+
+variable "hostname" {
+  type        = string
+  description = "Hostname for the VM"
+  default     = "vm-host"
+}
+
+variable "ssh_public_key" {
+  type        = string
+  description = "SSH public key for authentication"
+  default     = ""
+}
+
+variable "ssh_private_key_file" {
+  type        = string
+  description = "Path to SSH private key file for Packer to connect"
+  default     = "Packer/keys/packer_ed25519"
+  sensitive   = true
+}
+
 source "qemu" "vm" {
   iso_url      = var.input_image
   iso_checksum = "none"
@@ -61,14 +93,21 @@ source "qemu" "vm" {
   memory = 2048
   cpus   = 2
 
-  cd_files = [
-    #"cloud_init/user-data", #todo use the templatefile() function 
-    #"cloud_init/meta-data",#todo use the templatefile() function 
-  ]
+  cd_content = {
+    "/user-data" = templatefile("${path.root}/cloud-init/user-data", {
+      username       = var.username
+      password       = var.password
+      hostname       = var.hostname
+      ssh_public_key = var.ssh_public_key
+    })
+    "/meta-data" = templatefile("${path.root}/cloud-init/meta-data", {
+      hostname = var.hostname
+    })
+  }
   cd_label = "cidata"
 
-  ssh_username         = "packer"
-  ssh_private_key_file = "Packer/keys/packer_ed25519"
+  ssh_username         = var.username
+  ssh_private_key_file = var.ssh_private_key_file
   ssh_timeout          = "10m"
 
   shutdown_command = "sudo shutdown -P now"
