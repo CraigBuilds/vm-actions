@@ -57,6 +57,7 @@ source "qemu" "vm" {
   vm_name          = var.output_name
   headless         = true
 
+  # Virtual Hardware used when running this image. It can be changed in whatever virtual machine you end up using, this is just the hardware to provision it. 
   memory = 2048
   cpus   = 2
 
