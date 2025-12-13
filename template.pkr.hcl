@@ -68,6 +68,7 @@ variable "ssh_private_key_file" {
   type        = string
   description = "Path to SSH private key file for Packer to connect"
   default     = "Packer/keys/packer_ed25519"
+  sensitive   = true
 }
 
 source "qemu" "vm" {
