@@ -46,7 +46,7 @@ inputs:
     required: false
     default: ''
   shutdown_command:
-    description: 'Command to shut down the VM (varies by OS, e.g., "poweroff" for Alpine, "sudo shutdown -P now" for Ubuntu)'
+    description: 'Command to shut down the VM (varies by OS, e.g., "sudo /sbin/poweroff" for Alpine, "sudo shutdown -P now" for Ubuntu)'
     required: false
     default: 'echo "Packer shutdown triggered"'
 
