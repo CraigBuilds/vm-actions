@@ -147,32 +147,76 @@ sudo ufw --force enable
 echo "Provisioning complete!"
 ```
 
-## Example 3: Multi-package installation with inline commands
+## Example 3: Multi-step pipeline - building a VM in stages
+
+This example demonstrates how to build a VM in multiple stages within the same job. First, we take a cloud image and install basic utilities, then we take that output and add development tools to it.
 
 ```yaml
-- name: Provision development VM
-  uses: CraigBuilds/vm-actions/provision-vm@main
-  with:
-    input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
-    output_directory: './output'
-    output_name: 'dev-vm.qcow2'
-    build_name: 'dev-environment'
-    inline_provision_commands: |
-      sudo apt-get update
-      sudo apt-get install -y build-essential git curl wget
-      curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-      sudo apt-get install -y nodejs
-      node --version
-      npm --version
-    username: 'developer'
-    hostname: 'dev-box'
-    ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-    ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+name: Multi-stage VM build
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate SSH key pair
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
+          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
+          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          cat ~/.ssh/packer_key >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Stage 1 - Base system with utilities
+        uses: CraigBuilds/vm-actions/provision-vm@main
+        with:
+          input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
+          output_directory: './stage1-output'
+          output_name: 'base-vm.qcow2'
+          build_name: 'stage1-base-system'
+          inline_provision_commands: |
+            sudo apt-get update
+            sudo apt-get install -y vim curl wget htop
+            echo "Stage 1 complete" | sudo tee /etc/stage1-complete
+          username: 'ubuntu'
+          hostname: 'base-vm'
+          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
+          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+
+      - name: Stage 2 - Add development environment
+        uses: CraigBuilds/vm-actions/provision-vm@main
+        with:
+          input_image: './stage1-output/base-vm.qcow2'
+          output_directory: './stage2-output'
+          output_name: 'dev-vm.qcow2'
+          build_name: 'stage2-dev-environment'
+          inline_provision_commands: |
+            sudo apt-get update
+            sudo apt-get install -y build-essential git
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            node --version
+            npm --version
+            echo "Stage 2 complete" | sudo tee /etc/stage2-complete
+          username: 'ubuntu'
+          hostname: 'dev-vm'
+          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
+          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+
+      - name: Upload final VM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-vm
+          path: ./stage2-output/dev-vm.qcow2
 ```
 
 # Multi Stage Pipelines
 
-Chain together these actions to provision the VM in stages. For example... todo
+You can chain together multiple provision-vm actions to build VMs in stages, where each stage takes the output from the previous stage and adds more customization. See Example 3 above for a complete multi-step pipeline demonstration.
 
 # Todo
 
