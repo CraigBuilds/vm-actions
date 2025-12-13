@@ -45,6 +45,10 @@ inputs:
     description: 'SSH private key content for Packer to connect (will be written to a temporary file)'
     required: false
     default: ''
+  shutdown_command:
+    description: 'Command to shut down the VM (varies by OS, e.g., "poweroff" for Alpine, "sudo shutdown -P now" for Ubuntu)'
+    required: false
+    default: 'echo "Packer shutdown triggered"'
 
 runs:
   using: 'composite'
@@ -79,84 +83,135 @@ runs:
           echo "All dependencies already installed"
         fi
 
-    - name: Prepare SSH private key
+    - name: Prepare SSH private key file
+      if: inputs.ssh_private_key != ''
       shell: bash
       run: |
-        if [ -n "${{ inputs.ssh_private_key }}" ]; then
-          mkdir -p /tmp/packer-ssh-keys
-          chmod 700 /tmp/packer-ssh-keys
-          cat > /tmp/packer-ssh-keys/packer_key << 'EOF'
-${{ inputs.ssh_private_key }}
-        EOF
-          chmod 600 /tmp/packer-ssh-keys/packer_key
-          echo "SSH_PRIVATE_KEY_FILE=/tmp/packer-ssh-keys/packer_key" >> $GITHUB_ENV
-        else
-          echo "SSH_PRIVATE_KEY_FILE=Packer/keys/packer_ed25519" >> $GITHUB_ENV
-        fi
+        mkdir -p /tmp/packer-ssh-keys
+        chmod 700 /tmp/packer-ssh-keys
+        echo "${{ inputs.ssh_private_key }}" > /tmp/packer-ssh-keys/packer_key
+        chmod 600 /tmp/packer-ssh-keys/packer_key
+        echo "SSH_PRIVATE_KEY_FILE=/tmp/packer-ssh-keys/packer_key" >> $GITHUB_ENV
 
-    - name: Validate provisioning inputs
+    - name: Set default SSH private key path
+      if: inputs.ssh_private_key == ''
       shell: bash
       run: |
-        if [ -z "${{ inputs.input_provision_script }}" ] && [ -z "${{ inputs.inline_provision_commands }}" ]; then
-          echo "Error: Either input_provision_script or inline_provision_commands must be provided"
-          exit 1
-        fi
-        if [ -n "${{ inputs.input_provision_script }}" ] && [ -n "${{ inputs.inline_provision_commands }}" ]; then
-          echo "Error: Only one of input_provision_script or inline_provision_commands should be provided"
-          exit 1
-        fi
+        echo "SSH_PRIVATE_KEY_FILE=Packer/keys/packer_ed25519" >> $GITHUB_ENV
+
+    - name: Validate that at least one provisioning method is provided
+      if: inputs.input_provision_script == '' && inputs.inline_provision_commands == ''
+      shell: bash
+      run: |
+        echo "::error::Either input_provision_script or inline_provision_commands must be provided"
+        exit 1
+
+    - name: Validate that only one provisioning method is provided
+      if: inputs.input_provision_script != '' && inputs.inline_provision_commands != ''
+      shell: bash
+      run: |
+        echo "::error::Only one of input_provision_script or inline_provision_commands should be provided"
+        exit 1
 
     - name: Initialize Packer template
       shell: bash
       run: packer init ${{ github.action_path }}/../template.pkr.hcl
 
-    - name: Validate Packer template
+    - name: Validate Packer template (with provision script)
+      if: inputs.input_provision_script != ''
       shell: bash
       run: |
-        PACKER_VARS="-var input_image=${{ inputs.input_image }} \
-          -var output_directory=${{ inputs.output_directory }} \
-          -var output_name=${{ inputs.output_name }} \
-          -var build_name=${{ inputs.build_name }} \
-          -var disk_compression=${{ inputs.disk_compression }} \
-          -var username=${{ inputs.username }} \
-          -var password=${{ inputs.password }} \
-          -var hostname=${{ inputs.hostname }} \
-          -var ssh_public_key=${{ inputs.ssh_public_key }} \
-          -var ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}"
+        echo "::group::Packer Validate Command"
+        echo "Running packer validate with provision script"
+        echo "::endgroup::"
         
-        if [ -n "${{ inputs.input_provision_script }}" ]; then
-          PACKER_VARS="$PACKER_VARS -var input_provision_script=${{ inputs.input_provision_script }}"
-        fi
-        
-        if [ -n "${{ inputs.inline_provision_commands }}" ]; then
-          PACKER_VARS="$PACKER_VARS -var inline_provision_commands=${{ inputs.inline_provision_commands }}"
-        fi
-        
-        packer validate $PACKER_VARS ${{ github.action_path }}/../template.pkr.hcl
+        packer validate \
+          -var "input_image=${{ inputs.input_image }}" \
+          -var "output_directory=${{ inputs.output_directory }}" \
+          -var "output_name=${{ inputs.output_name }}" \
+          -var "build_name=${{ inputs.build_name }}" \
+          -var "disk_compression=${{ inputs.disk_compression }}" \
+          -var "username=${{ inputs.username }}" \
+          -var "password=${{ inputs.password }}" \
+          -var "hostname=${{ inputs.hostname }}" \
+          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
+          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "shutdown_command=${{ inputs.shutdown_command }}" \
+          -var "input_provision_script=${{ inputs.input_provision_script }}" \
+          ${{ github.action_path }}/../template.pkr.hcl
 
-    - name: Build VM with Packer
+    - name: Validate Packer template (with inline commands)
+      if: inputs.inline_provision_commands != ''
+      shell: bash
+      env:
+        INLINE_PROVISION_COMMANDS: ${{ inputs.inline_provision_commands }}
+      run: |
+        echo "::group::Packer Validate Command"
+        echo "Running packer validate with inline commands ($(echo "$INLINE_PROVISION_COMMANDS" | wc -l) lines)"
+        echo "::endgroup::"
+        
+        packer validate \
+          -var "input_image=${{ inputs.input_image }}" \
+          -var "output_directory=${{ inputs.output_directory }}" \
+          -var "output_name=${{ inputs.output_name }}" \
+          -var "build_name=${{ inputs.build_name }}" \
+          -var "disk_compression=${{ inputs.disk_compression }}" \
+          -var "username=${{ inputs.username }}" \
+          -var "password=${{ inputs.password }}" \
+          -var "hostname=${{ inputs.hostname }}" \
+          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
+          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "shutdown_command=${{ inputs.shutdown_command }}" \
+          -var "inline_provision_commands=$INLINE_PROVISION_COMMANDS" \
+          ${{ github.action_path }}/../template.pkr.hcl
+
+    - name: Build VM with Packer (with provision script)
+      if: inputs.input_provision_script != ''
       shell: bash
       run: |
-        PACKER_VARS="-var input_image=${{ inputs.input_image }} \
-          -var output_directory=${{ inputs.output_directory }} \
-          -var output_name=${{ inputs.output_name }} \
-          -var build_name=${{ inputs.build_name }} \
-          -var disk_compression=${{ inputs.disk_compression }} \
-          -var username=${{ inputs.username }} \
-          -var password=${{ inputs.password }} \
-          -var hostname=${{ inputs.hostname }} \
-          -var ssh_public_key=${{ inputs.ssh_public_key }} \
-          -var ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}"
+        echo "::group::Packer Build Command"
+        echo "Running packer build with provision script"
+        echo "::endgroup::"
         
-        if [ -n "${{ inputs.input_provision_script }}" ]; then
-          PACKER_VARS="$PACKER_VARS -var input_provision_script=${{ inputs.input_provision_script }}"
-        fi
+        packer build \
+          -var "input_image=${{ inputs.input_image }}" \
+          -var "output_directory=${{ inputs.output_directory }}" \
+          -var "output_name=${{ inputs.output_name }}" \
+          -var "build_name=${{ inputs.build_name }}" \
+          -var "disk_compression=${{ inputs.disk_compression }}" \
+          -var "username=${{ inputs.username }}" \
+          -var "password=${{ inputs.password }}" \
+          -var "hostname=${{ inputs.hostname }}" \
+          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
+          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "shutdown_command=${{ inputs.shutdown_command }}" \
+          -var "input_provision_script=${{ inputs.input_provision_script }}" \
+          ${{ github.action_path }}/../template.pkr.hcl
+
+    - name: Build VM with Packer (with inline commands)
+      if: inputs.inline_provision_commands != ''
+      shell: bash
+      env:
+        INLINE_PROVISION_COMMANDS: ${{ inputs.inline_provision_commands }}
+      run: |
+        echo "::group::Packer Build Command"
+        echo "Running packer build with inline commands ($(echo "$INLINE_PROVISION_COMMANDS" | wc -l) lines)"
+        echo "::endgroup::"
         
-        if [ -n "${{ inputs.inline_provision_commands }}" ]; then
-          PACKER_VARS="$PACKER_VARS -var inline_provision_commands=${{ inputs.inline_provision_commands }}"
-        fi
-        
-        packer build $PACKER_VARS ${{ github.action_path }}/../template.pkr.hcl
+        packer build \
+          -var "input_image=${{ inputs.input_image }}" \
+          -var "output_directory=${{ inputs.output_directory }}" \
+          -var "output_name=${{ inputs.output_name }}" \
+          -var "build_name=${{ inputs.build_name }}" \
+          -var "disk_compression=${{ inputs.disk_compression }}" \
+          -var "username=${{ inputs.username }}" \
+          -var "password=${{ inputs.password }}" \
+          -var "hostname=${{ inputs.hostname }}" \
+          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
+          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
+          -var "shutdown_command=${{ inputs.shutdown_command }}" \
+          -var "inline_provision_commands=$INLINE_PROVISION_COMMANDS" \
+          ${{ github.action_path }}/../template.pkr.hcl
 
     - name: Cleanup SSH private key
       if: always()
