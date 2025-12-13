@@ -1,0 +1,57 @@
+# This workflow tests provisioning an Ubuntu Desktop VM from a cloud server image.
+# It starts with the Ubuntu Server cloud image and installs a lightweight graphical desktop (XFCE),
+# demonstrating how to convert a server image into a desktop environment.
+
+name: Build Ubuntu Desktop VM
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  test-ubuntu-desktop:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate SSH key pair
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
+          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
+          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          cat ~/.ssh/packer_key >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Provision Ubuntu Desktop VM
+        uses: ./provision-vm
+        with:
+          input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
+          output_directory: './output'
+          output_name: 'ubuntu-desktop.qcow2'
+          build_name: 'ubuntu-desktop-build'
+          inline_provision_commands: |
+            sudo apt-get update
+            sudo apt-get install -y xfce4 xfce4-goodies lightdm
+            sudo systemctl set-default graphical.target
+            echo "This Ubuntu Desktop VM was provisioned by Packer on $(date)" | sudo tee /etc/provisioned_by_packer
+            echo "Ubuntu Desktop provisioning complete!"
+          username: 'ubuntu'
+          hostname: 'ubuntu-desktop'
+          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
+          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+
+      - name: Check VM size
+        run: |
+          ls -lh ./output/ubuntu-desktop.qcow2
+          size=$(du -h ./output/ubuntu-desktop.qcow2 | cut -f1)
+          echo "VM size: $size"
+
+      - name: Upload VM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-desktop-vm
+          path: ./output/ubuntu-desktop.qcow2

@@ -1,4 +1,8 @@
-name: Test VM Actions
+# This workflow tests provisioning a lightweight Alpine Linux VM from a cloud image.
+# It downloads the Alpine cloud image, provisions it with basic utilities (curl, vim),
+# and validates the build by checking the output VM size and uploading it as an artifact.
+
+name: Build Lightweight Alpine Linux VM
 
 on:
   workflow_dispatch:
