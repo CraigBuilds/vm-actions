@@ -11,8 +11,13 @@ inputs:
     description: 'Name of the output VM file'
     required: true
   input_provision_script:
-    description: 'Path to the provisioning script to run'
-    required: true
+    description: 'Path to the provisioning script to run (provide either this or inline_provision_commands)'
+    required: false
+    default: ''
+  inline_provision_commands:
+    description: 'Inline shell commands to run for provisioning (alternative to input_provision_script)'
+    required: false
+    default: ''
   build_name:
     description: 'Descriptive name for this build (displayed in Packer logs and build metadata, does not affect output files)'
     required: true
@@ -89,6 +94,18 @@ ${{ inputs.ssh_private_key }}
           echo "SSH_PRIVATE_KEY_FILE=Packer/keys/packer_ed25519" >> $GITHUB_ENV
         fi
 
+    - name: Validate provisioning inputs
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.input_provision_script }}" ] && [ -z "${{ inputs.inline_provision_commands }}" ]; then
+          echo "Error: Either input_provision_script or inline_provision_commands must be provided"
+          exit 1
+        fi
+        if [ -n "${{ inputs.input_provision_script }}" ] && [ -n "${{ inputs.inline_provision_commands }}" ]; then
+          echo "Error: Only one of input_provision_script or inline_provision_commands should be provided"
+          exit 1
+        fi
+
     - name: Initialize Packer template
       shell: bash
       run: packer init ${{ github.action_path }}/../template.pkr.hcl
@@ -96,36 +113,50 @@ ${{ inputs.ssh_private_key }}
     - name: Validate Packer template
       shell: bash
       run: |
-        packer validate \
-          -var "input_image=${{ inputs.input_image }}" \
-          -var "output_directory=${{ inputs.output_directory }}" \
-          -var "output_name=${{ inputs.output_name }}" \
-          -var "input_provision_script=${{ inputs.input_provision_script }}" \
-          -var "build_name=${{ inputs.build_name }}" \
-          -var "disk_compression=${{ inputs.disk_compression }}" \
-          -var "username=${{ inputs.username }}" \
-          -var "password=${{ inputs.password }}" \
-          -var "hostname=${{ inputs.hostname }}" \
-          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
-          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
-          ${{ github.action_path }}/../template.pkr.hcl
+        PACKER_VARS="-var input_image=${{ inputs.input_image }} \
+          -var output_directory=${{ inputs.output_directory }} \
+          -var output_name=${{ inputs.output_name }} \
+          -var build_name=${{ inputs.build_name }} \
+          -var disk_compression=${{ inputs.disk_compression }} \
+          -var username=${{ inputs.username }} \
+          -var password=${{ inputs.password }} \
+          -var hostname=${{ inputs.hostname }} \
+          -var ssh_public_key=${{ inputs.ssh_public_key }} \
+          -var ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}"
+        
+        if [ -n "${{ inputs.input_provision_script }}" ]; then
+          PACKER_VARS="$PACKER_VARS -var input_provision_script=${{ inputs.input_provision_script }}"
+        fi
+        
+        if [ -n "${{ inputs.inline_provision_commands }}" ]; then
+          PACKER_VARS="$PACKER_VARS -var inline_provision_commands=${{ inputs.inline_provision_commands }}"
+        fi
+        
+        packer validate $PACKER_VARS ${{ github.action_path }}/../template.pkr.hcl
 
     - name: Build VM with Packer
       shell: bash
       run: |
-        packer build \
-          -var "input_image=${{ inputs.input_image }}" \
-          -var "output_directory=${{ inputs.output_directory }}" \
-          -var "output_name=${{ inputs.output_name }}" \
-          -var "input_provision_script=${{ inputs.input_provision_script }}" \
-          -var "build_name=${{ inputs.build_name }}" \
-          -var "disk_compression=${{ inputs.disk_compression }}" \
-          -var "username=${{ inputs.username }}" \
-          -var "password=${{ inputs.password }}" \
-          -var "hostname=${{ inputs.hostname }}" \
-          -var "ssh_public_key=${{ inputs.ssh_public_key }}" \
-          -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
-          ${{ github.action_path }}/../template.pkr.hcl
+        PACKER_VARS="-var input_image=${{ inputs.input_image }} \
+          -var output_directory=${{ inputs.output_directory }} \
+          -var output_name=${{ inputs.output_name }} \
+          -var build_name=${{ inputs.build_name }} \
+          -var disk_compression=${{ inputs.disk_compression }} \
+          -var username=${{ inputs.username }} \
+          -var password=${{ inputs.password }} \
+          -var hostname=${{ inputs.hostname }} \
+          -var ssh_public_key=${{ inputs.ssh_public_key }} \
+          -var ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}"
+        
+        if [ -n "${{ inputs.input_provision_script }}" ]; then
+          PACKER_VARS="$PACKER_VARS -var input_provision_script=${{ inputs.input_provision_script }}"
+        fi
+        
+        if [ -n "${{ inputs.inline_provision_commands }}" ]; then
+          PACKER_VARS="$PACKER_VARS -var inline_provision_commands=${{ inputs.inline_provision_commands }}"
+        fi
+        
+        packer build $PACKER_VARS ${{ github.action_path }}/../template.pkr.hcl
 
     - name: Cleanup SSH private key
       if: always()

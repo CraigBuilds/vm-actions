@@ -25,6 +25,13 @@ variable "output_name" {
 variable "input_provision_script" {
   type        = string
   description = "Path to the provisioning script to run"
+  default     = null
+}
+
+variable "inline_provision_commands" {
+  type        = string
+  description = "Inline shell commands to run for provisioning (alternative to input_provision_script)"
+  default     = null
 }
 
 variable "build_name" {
@@ -118,6 +125,7 @@ build {
   sources = ["source.qemu.vm"]
 
   provisioner "shell" {
-    script = var.input_provision_script
+    script = var.input_provision_script != null && var.input_provision_script != "" ? var.input_provision_script : null
+    inline = (var.input_provision_script == null || var.input_provision_script == "") && var.inline_provision_commands != null && var.inline_provision_commands != "" ? [var.inline_provision_commands] : null
   }
 }
