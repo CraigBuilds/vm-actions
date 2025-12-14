@@ -1,0 +1,47 @@
+name: 'Test Alpine Linux VM'
+description: 'Tests building a quick, lightweight Alpine Linux VM using the provision-vm action'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Generate SSH key pair
+      shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
+        echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
+        echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+        cat ~/.ssh/packer_key >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
+    - name: Provision Alpine VM
+      uses: ./provision-vm
+      with:
+        input_image: 'https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/cloud/nocloud_alpine-3.19.0-x86_64-bios-cloudinit-r0.qcow2'
+        output_directory: './output'
+        output_name: 'alpine-test.qcow2'
+        build_name: 'alpine-test-build'
+        inline_provision_commands: |
+          doas apk update && doas apk add curl vim
+          echo "This VM was provisioned by Packer on $(date)" > ~/provisioned_by_packer
+          echo "Test provisioning complete!"
+        username: 'alpine'
+        hostname: 'test-vm'
+        ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
+        ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+        user_groups: 'wheel'
+        cloud_init_packages: 'doas'
+        shutdown_command: 'doas /sbin/poweroff'
+
+    - name: Check VM size
+      shell: bash
+      run: |
+        ls -lh ./output/alpine-test.qcow2
+        size=$(du -h ./output/alpine-test.qcow2 | cut -f1)
+        echo "VM size: $size"
+
+    - name: Upload VM artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: alpine-test-vm
+        path: ./output/alpine-test.qcow2

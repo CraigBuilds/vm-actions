@@ -18,45 +18,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate SSH key pair
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
-          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
-          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
-          cat ~/.ssh/packer_key >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Provision Alpine VM
-        uses: ./provision-vm
-        with:
-          input_image: 'https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/cloud/nocloud_alpine-3.19.0-x86_64-bios-cloudinit-r0.qcow2'
-          output_directory: './output'
-          output_name: 'alpine-test.qcow2'
-          build_name: 'alpine-test-build'
-          inline_provision_commands: |
-            doas apk update && doas apk add curl vim
-            echo "This VM was provisioned by Packer on $(date)" > ~/provisioned_by_packer
-            echo "Test provisioning complete!"
-          username: 'alpine'
-          hostname: 'test-vm'
-          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
-          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
-          user_groups: 'wheel'
-          cloud_init_packages: 'doas'
-          shutdown_command: 'doas /sbin/poweroff'
-
-      - name: Check VM size
-        run: |
-          ls -lh ./output/alpine-test.qcow2
-          size=$(du -h ./output/alpine-test.qcow2 | cut -f1)
-          echo "VM size: $size"
-
-      - name: Upload VM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: alpine-test-vm
-          path: ./output/alpine-test.qcow2
+      - name: Run Alpine VM test
+        uses: ./test-alpine-vm
 
   test-ubuntu-server:
     runs-on: ubuntu-latest
@@ -66,47 +29,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate SSH key pair
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
-          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
-          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
-          cat ~/.ssh/packer_key >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Provision Ubuntu Server VM
-        uses: ./provision-vm
-        with:
-          input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
-          output_directory: './output'
-          output_name: 'ubuntu-server-test.qcow2'
-          build_name: 'ubuntu-server-test-build'
-          inline_provision_commands: |
-            sudo apt-get update
-            sudo apt-get install -y curl vim htop nginx
-            sudo systemctl enable nginx
-            echo "This Ubuntu Server VM was provisioned by Packer on $(date)" | sudo tee /home/ubuntu/provisioned_by_packer
-            echo "Test provisioning complete!"
-          username: 'ubuntu'
-          hostname: 'ubuntu-server-test'
-          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
-          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
-          user_groups: 'sudo'
-          cloud_init_packages: 'sudo'
-          shutdown_command: 'sudo shutdown -P now'
-
-      - name: Check VM size
-        run: |
-          ls -lh ./output/ubuntu-server-test.qcow2
-          size=$(du -h ./output/ubuntu-server-test.qcow2 | cut -f1)
-          echo "VM size: $size"
-
-      - name: Upload VM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ubuntu-server-test-vm
-          path: ./output/ubuntu-server-test.qcow2
+      - name: Run Ubuntu Server VM test
+        uses: ./test-ubuntu-server-vm
 
   test-ubuntu-desktop:
     runs-on: ubuntu-latest
@@ -116,47 +40,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate SSH key pair
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
-          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
-          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
-          cat ~/.ssh/packer_key >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Provision Ubuntu Desktop VM
-        uses: ./provision-vm
-        with:
-          input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
-          output_directory: './output'
-          output_name: 'ubuntu-desktop-test.qcow2'
-          build_name: 'ubuntu-desktop-test-build'
-          inline_provision_commands: |
-            sudo apt-get update
-            sudo apt-get install -y xfce4 xfce4-goodies lightdm
-            sudo systemctl set-default graphical.target
-            echo "This Ubuntu Desktop VM was provisioned by Packer on $(date)" | sudo tee /home/ubuntu/provisioned_by_packer
-            echo "Desktop environment installation complete!"
-          username: 'ubuntu'
-          hostname: 'ubuntu-desktop-test'
-          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
-          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
-          user_groups: 'sudo'
-          cloud_init_packages: 'sudo'
-          shutdown_command: 'sudo shutdown -P now'
-
-      - name: Check VM size
-        run: |
-          ls -lh ./output/ubuntu-desktop-test.qcow2
-          size=$(du -h ./output/ubuntu-desktop-test.qcow2 | cut -f1)
-          echo "VM size: $size"
-
-      - name: Upload VM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ubuntu-desktop-test-vm
-          path: ./output/ubuntu-desktop-test.qcow2
+      - name: Run Ubuntu Desktop VM test
+        uses: ./test-ubuntu-desktop-vm
 
   test-multi-stage:
     runs-on: ubuntu-latest
@@ -166,65 +51,5 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate SSH key pair
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
-          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
-          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
-          cat ~/.ssh/packer_key >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Stage 1 - Base system with utilities
-        uses: ./provision-vm
-        with:
-          input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
-          output_directory: './stage1-output'
-          output_name: 'base-vm.qcow2'
-          build_name: 'stage1-base-system'
-          inline_provision_commands: |
-            sudo apt-get update
-            sudo apt-get install -y vim curl wget htop
-            echo "Stage 1 complete" | sudo tee /etc/stage1-complete
-          username: 'ubuntu'
-          hostname: 'base-vm'
-          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
-          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
-          user_groups: 'sudo'
-          cloud_init_packages: 'sudo'
-          shutdown_command: 'sudo shutdown -P now'
-
-      - name: Stage 2 - Add development environment
-        uses: ./provision-vm
-        with:
-          input_image: './stage1-output/base-vm.qcow2'
-          output_directory: './stage2-output'
-          output_name: 'dev-vm.qcow2'
-          build_name: 'stage2-dev-environment'
-          inline_provision_commands: |
-            sudo apt-get update
-            sudo apt-get install -y build-essential git
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-            node --version
-            npm --version
-            echo "Stage 2 complete" | sudo tee /etc/stage2-complete
-          username: 'ubuntu'
-          hostname: 'dev-vm'
-          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
-          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
-          user_groups: 'sudo'
-          cloud_init_packages: 'sudo'
-          shutdown_command: 'sudo shutdown -P now'
-
-      - name: Check final VM size
-        run: |
-          ls -lh ./stage2-output/dev-vm.qcow2
-          size=$(du -h ./stage2-output/dev-vm.qcow2 | cut -f1)
-          echo "Final VM size: $size"
-
-      - name: Upload final VM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dev-vm
-          path: ./stage2-output/dev-vm.qcow2
+      - name: Run Multi-Stage Pipeline test
+        uses: ./test-multi-stage-vm
