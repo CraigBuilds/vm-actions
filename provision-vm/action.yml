@@ -54,7 +54,7 @@ inputs:
     required: false
     default: 'echo "Packer shutdown triggered"'
   cloud_init_packages:
-    description: 'Comma-separated list of packages to install via cloud-init (e.g., "doas" for Alpine, "sudo" for Ubuntu)'
+    description: 'Comma-separated list of packages to install via cloud-init (e.g., "doas" for Alpine, "sudo" for Ubuntu, or "sudo,vim" for multiple packages). Single values are allowed.'
     required: false
     default: 'sudo'
 
