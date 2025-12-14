@@ -6,16 +6,20 @@ packages:
 %{ endfor ~}
 write_files:
   - path: /etc/doas.conf
+write_files:
+  %{ if "doas" in cloud_init_packages %}
+  - path: /etc/doas.conf
     content: |
       permit nopass :wheel
     permissions: '0600'
+  %{ endif %}
+  %{ if "sudo" in cloud_init_packages %}
   - path: /etc/sudoers.d/90-vm-actions-sudo
     content: |
       # Created by vm-actions for passwordless sudo
-      # WARNING: This passwordless sudo configuration is intended for testing and development environments only.
-      #          Review and restrict this setting before using in production.
       %sudo ALL=(ALL) NOPASSWD:ALL
     permissions: '0440'
+  %{ endif %}
 
 users:
   - name: ${username}
