@@ -15,11 +15,11 @@ users:
 write_files:
   - path: /etc/doas.conf
     content: |
-      permit nopass :wheel
+      permit nopass :${user_groups}
     permissions: '0600'
   - path: /etc/sudoers.d/90-cloud-init-users
     content: |
-      %sudo ALL=(ALL) NOPASSWD:ALL
+      %${user_groups} ALL=(ALL) NOPASSWD:ALL
     permissions: '0440'
 
 hostname: ${hostname}
