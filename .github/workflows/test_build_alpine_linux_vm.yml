@@ -1,4 +1,8 @@
-name: Test VM Actions
+# This workflow tests building a quick, lightweight Alpine Linux VM using the provision-vm action.
+# Alpine is a minimal Linux distribution that's fast to build and provision, making it ideal
+# for validating the basic VM building functionality.
+
+name: Test Build Alpine Linux VM
 
 on:
   workflow_dispatch:

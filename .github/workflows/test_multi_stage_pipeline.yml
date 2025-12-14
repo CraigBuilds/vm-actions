@@ -1,0 +1,79 @@
+# This workflow tests a multi-stage VM building pipeline using the provision-vm action.
+# It demonstrates building a VM in multiple stages within the same job:
+# Stage 1: Start with a cloud image and install basic utilities
+# Stage 2: Take the Stage 1 output and add development tools
+# This validates that the action can use locally built VMs as input for subsequent builds.
+
+name: Test Multi-Stage Pipeline
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  test-multi-stage-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate SSH key pair
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
+          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
+          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          cat ~/.ssh/packer_key >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Stage 1 - Base system with utilities
+        uses: ./provision-vm
+        with:
+          input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
+          output_directory: './stage1-output'
+          output_name: 'base-vm.qcow2'
+          build_name: 'stage1-base-system'
+          inline_provision_commands: |
+            sudo apt-get update
+            sudo apt-get install -y vim curl wget htop
+            echo "Stage 1 complete" | sudo tee /etc/stage1-complete
+          username: 'ubuntu'
+          hostname: 'base-vm'
+          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
+          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+          shutdown_command: 'sudo shutdown -P now'
+
+      - name: Stage 2 - Add development environment
+        uses: ./provision-vm
+        with:
+          input_image: './stage1-output/base-vm.qcow2'
+          output_directory: './stage2-output'
+          output_name: 'dev-vm.qcow2'
+          build_name: 'stage2-dev-environment'
+          inline_provision_commands: |
+            sudo apt-get update
+            sudo apt-get install -y build-essential git
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            node --version
+            npm --version
+            echo "Stage 2 complete" | sudo tee /etc/stage2-complete
+          username: 'ubuntu'
+          hostname: 'dev-vm'
+          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
+          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+          shutdown_command: 'sudo shutdown -P now'
+
+      - name: Check final VM size
+        run: |
+          ls -lh ./stage2-output/dev-vm.qcow2
+          size=$(du -h ./stage2-output/dev-vm.qcow2 | cut -f1)
+          echo "Final VM size: $size"
+
+      - name: Upload final VM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-vm
+          path: ./stage2-output/dev-vm.qcow2

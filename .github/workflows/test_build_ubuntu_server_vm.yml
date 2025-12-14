@@ -1,0 +1,58 @@
+# This workflow tests building an Ubuntu Server VM using the provision-vm action.
+# It uses the official Ubuntu Cloud Images (jammy/22.04) and installs common server packages
+# to validate VM provisioning with a more feature-complete Linux distribution.
+
+name: Test Build Ubuntu Server VM
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  test-provision-ubuntu-server:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate SSH key pair
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t ed25519 -f ~/.ssh/packer_key -N ""
+          echo "SSH_PUBLIC_KEY=$(cat ~/.ssh/packer_key.pub)" >> $GITHUB_ENV
+          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          cat ~/.ssh/packer_key >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Provision Ubuntu Server VM
+        uses: ./provision-vm
+        with:
+          input_image: 'https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img'
+          output_directory: './output'
+          output_name: 'ubuntu-server-test.qcow2'
+          build_name: 'ubuntu-server-test-build'
+          inline_provision_commands: |
+            sudo apt-get update
+            sudo apt-get install -y curl vim htop nginx
+            sudo systemctl enable nginx
+            echo "This Ubuntu Server VM was provisioned by Packer on $(date)" | sudo tee /home/ubuntu/provisioned_by_packer
+            echo "Test provisioning complete!"
+          username: 'ubuntu'
+          hostname: 'ubuntu-server-test'
+          ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
+          ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
+          shutdown_command: 'sudo shutdown -P now'
+
+      - name: Check VM size
+        run: |
+          ls -lh ./output/ubuntu-server-test.qcow2
+          size=$(du -h ./output/ubuntu-server-test.qcow2 | cut -f1)
+          echo "VM size: $size"
+
+      - name: Upload VM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-server-test-vm
+          path: ./output/ubuntu-server-test.qcow2
