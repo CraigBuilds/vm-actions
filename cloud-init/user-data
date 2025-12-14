@@ -27,11 +27,14 @@ users:
   - name: ${username}
     groups: [${user_groups}]
     shell: /bin/bash
-    lock_passwd: false%{ if password != "" }
-    passwd: ${password}%{ endif }
-    %{ if ssh_public_key != "" }
+    lock_passwd: false
+%{ if password != "" ~}
+    passwd: ${password}
+%{ endif ~}
+%{ if ssh_public_key != "" ~}
     ssh_authorized_keys:
-      - ${ssh_public_key}%{ endif }
+      - ${ssh_public_key}
+%{ endif ~}
 
 # Set hostname
 hostname: ${hostname}
