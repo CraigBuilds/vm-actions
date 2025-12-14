@@ -92,7 +92,7 @@ variable "shutdown_command" {
 
 variable "cloud_init_packages" {
   type        = string
-  description = "Comma-separated list of packages to install via cloud-init (e.g., 'doas' for Alpine, 'sudo' for Ubuntu)"
+  description = "Comma-separated list of packages to install via cloud-init. You may specify a single package (e.g., 'sudo') or multiple packages (e.g., 'doas,curl' or 'sudo,vim')."
   default     = "sudo"
 }
 
