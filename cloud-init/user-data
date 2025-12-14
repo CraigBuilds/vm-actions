@@ -5,21 +5,23 @@ packages:
   - ${trimspace(pkg)}
 %{ endfor ~}
 write_files:
-  - path: /etc/doas.conf
-write_files:
-  %{ if "doas" in cloud_init_packages %}
+  %{ for pkg in split(",", cloud_init_packages) ~}
+  %{ if trimspace(pkg) == "doas" ~}
   - path: /etc/doas.conf
     content: |
       permit nopass :wheel
     permissions: '0600'
-  %{ endif %}
-  %{ if "sudo" in cloud_init_packages %}
+  %{ endif ~}
+  %{ endfor ~}
+  %{ for pkg in split(",", cloud_init_packages) ~}
+  %{ if trimspace(pkg) == "sudo" ~}
   - path: /etc/sudoers.d/90-vm-actions-sudo
     content: |
       # Created by vm-actions for passwordless sudo
       %sudo ALL=(ALL) NOPASSWD:ALL
     permissions: '0440'
-  %{ endif %}
+  %{ endif ~}
+  %{ endfor ~}
 
 users:
   - name: ${username}
