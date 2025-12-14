@@ -44,6 +44,7 @@ jobs:
           ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
           ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
           user_groups: 'sudo'
+          cloud_init_packages: 'sudo'
           shutdown_command: 'sudo shutdown -P now'
 
       - name: Stage 2 - Add development environment
@@ -66,6 +67,7 @@ jobs:
           ssh_public_key: ${{ env.SSH_PUBLIC_KEY }}
           ssh_private_key: ${{ env.SSH_PRIVATE_KEY }}
           user_groups: 'sudo'
+          cloud_init_packages: 'sudo'
           shutdown_command: 'sudo shutdown -P now'
 
       - name: Check final VM size

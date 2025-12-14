@@ -90,6 +90,12 @@ variable "shutdown_command" {
   default     = "echo 'Packer shutdown triggered'"
 }
 
+variable "cloud_init_packages" {
+  type        = string
+  description = "Comma-separated list of packages to install via cloud-init (e.g., 'doas' for Alpine, 'sudo' for Ubuntu)"
+  default     = "sudo"
+}
+
 source "qemu" "vm" {
   iso_url      = var.input_image
   iso_checksum = "none"
@@ -114,11 +120,12 @@ source "qemu" "vm" {
 
   cd_content = {
     "/user-data" = templatefile("${path.root}/cloud-init/user-data", {
-      username       = var.username
-      password       = var.password
-      hostname       = var.hostname
-      ssh_public_key = var.ssh_public_key
-      user_groups    = var.user_groups
+      username            = var.username
+      password            = var.password
+      hostname            = var.hostname
+      ssh_public_key      = var.ssh_public_key
+      user_groups         = var.user_groups
+      cloud_init_packages = var.cloud_init_packages
     })
     "/meta-data" = templatefile("${path.root}/cloud-init/meta-data", {
       hostname = var.hostname
