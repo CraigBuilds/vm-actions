@@ -8,7 +8,6 @@ name: Test Multi-Stage Pipeline
 
 on:
   workflow_dispatch:
-  workflow_call:
 
 jobs:
   test-multi-stage-build:

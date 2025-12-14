@@ -6,7 +6,6 @@ name: Test Build Alpine Linux VM
 
 on:
   workflow_dispatch:
-  workflow_call:
 
 jobs:
   test-provision-vm:

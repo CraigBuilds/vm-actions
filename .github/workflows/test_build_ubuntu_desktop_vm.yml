@@ -6,7 +6,6 @@ name: Test Build Ubuntu Desktop VM
 
 on:
   workflow_dispatch:
-  workflow_call:
 
 jobs:
   test-provision-ubuntu-desktop:
