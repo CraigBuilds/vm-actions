@@ -12,6 +12,8 @@ write_files:
   - path: /etc/sudoers.d/90-vm-actions-sudo
     content: |
       # Created by vm-actions for passwordless sudo
+      # WARNING: This passwordless sudo configuration is intended for testing and development environments only.
+      #          Review and restrict this setting before using in production.
       %sudo ALL=(ALL) NOPASSWD:ALL
     permissions: '0440'
 
