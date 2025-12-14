@@ -131,8 +131,14 @@ jobs:
           output_name: 'ubuntu-desktop-test.qcow2'
           build_name: 'ubuntu-desktop-test-build'
           inline_provision_commands: |
+            export DEBIAN_FRONTEND=noninteractive
             sudo apt-get update
+            sudo debconf-set-selections <<'EOF'
+            lightdm shared/default-x-display-manager select lightdm
+            gdm3 shared/default-x-display-manager select lightdm
+            EOF
             sudo apt-get install -y xfce4 xfce4-goodies lightdm
+            sudo dpkg-reconfigure -f noninteractive lightdm
             sudo systemctl set-default graphical.target
             echo "This Ubuntu Desktop VM was provisioned by Packer on $(date)" | sudo tee /home/ubuntu/provisioned_by_packer
             echo "Desktop environment installation complete!"
