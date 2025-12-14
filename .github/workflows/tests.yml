@@ -137,7 +137,7 @@ jobs:
             lightdm shared/default-x-display-manager select lightdm
             gdm3 shared/default-x-display-manager select lightdm
             EOF
-            sudo apt-get install -y xfce4 xfce4-goodies lightdm
+            sudo apt-get install -y --no-install-recommends xfce4 lightdm
             sudo dpkg-reconfigure -f noninteractive lightdm
             sudo systemctl set-default graphical.target
             echo "This Ubuntu Desktop VM was provisioned by Packer on $(date)" | sudo tee /home/ubuntu/provisioned_by_packer
