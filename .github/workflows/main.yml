@@ -6,6 +6,9 @@ name: Main Test Suite
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test-alpine:
     uses: ./.github/workflows/test_build_alpine_linux_vm.yml
