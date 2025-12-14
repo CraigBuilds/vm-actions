@@ -6,7 +6,7 @@ name: Test Build Ubuntu Server VM
 
 on:
   workflow_dispatch:
-  pull_request:
+  workflow_call:
 
 jobs:
   test-provision-ubuntu-server:

@@ -1,0 +1,20 @@
+# Main workflow that runs all tests
+# This workflow triggers all test workflows on pull requests
+
+name: Main Test Suite
+
+on:
+  pull_request:
+
+jobs:
+  test-alpine:
+    uses: ./.github/workflows/test_build_alpine_linux_vm.yml
+
+  test-ubuntu-server:
+    uses: ./.github/workflows/test_build_ubuntu_server_vm.yml
+
+  test-ubuntu-desktop:
+    uses: ./.github/workflows/test_build_ubuntu_desktop_vm.yml
+
+  test-multi-stage:
+    uses: ./.github/workflows/test_multi_stage_pipeline.yml
