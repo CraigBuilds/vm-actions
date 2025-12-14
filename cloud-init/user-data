@@ -1,28 +1,33 @@
 #cloud-config
+# Install packages based on OS (doas for Alpine, sudo for Ubuntu, etc.)
+packages:%{ for pkg in split(",", cloud_init_packages) }
+  - ${trimspace(pkg)}%{ endfor }
 
-packages:
-%{ for pkg in split(",", cloud_init_packages) ~}
-  - ${trimspace(pkg)}
-%{ endfor ~}
+write_files:
+  - path: /etc/doas.conf
+    content: |
+      permit nopass :wheel
+    permissions: '0600'
+  - path: /etc/sudoers.d/90-vm-actions-sudo
+    content: |
+      # Created by vm-actions for passwordless sudo
+      %sudo ALL=(ALL) NOPASSWD:ALL
+    permissions: '0440'
 
 users:
   - name: ${username}
     groups: [${user_groups}]
     shell: /bin/bash
+    lock_passwd: false%{ if password != "" }
+    passwd: ${password}%{ endif }
+    %{ if ssh_public_key != "" }
     ssh_authorized_keys:
-      - ${ssh_public_key}
+      - ${ssh_public_key}%{ endif }
 
-write_files:
-  - path: /etc/doas.conf
-    content: |
-      permit nopass :${user_groups}
-    permissions: '0600'
-  - path: /etc/sudoers.d/90-cloud-init-users
-    content: |
-      %${user_groups} ALL=(ALL) NOPASSWD:ALL
-    permissions: '0440'
-
+# Set hostname
 hostname: ${hostname}
+manage_etc_hosts: true
 
+# Configure SSH
 ssh_pwauth: true
 disable_root: false
