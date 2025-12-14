@@ -8,9 +8,9 @@ write_files:
     content: |
       permit nopass :wheel
     permissions: '0600'
-  - path: /etc/sudoers.d/90-cloud-init-users
+  - path: /etc/sudoers.d/90-vm-actions-sudo
     content: |
-      # Created by cloud-init for passwordless sudo
+      # Created by vm-actions for passwordless sudo
       %sudo ALL=(ALL) NOPASSWD:ALL
     permissions: '0440'
 
@@ -23,7 +23,6 @@ users:
     %{ if ssh_public_key != "" }
     ssh_authorized_keys:
       - ${ssh_public_key}%{ endif }
-    sudo: ALL=(ALL) NOPASSWD:ALL
 
 # Set hostname
 hostname: ${hostname}
