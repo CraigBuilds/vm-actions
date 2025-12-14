@@ -1,8 +1,9 @@
 #cloud-config
 # Install packages based on OS (doas for Alpine, sudo for Ubuntu, etc.)
-packages:%{ for pkg in split(",", cloud_init_packages) }
-  - ${trimspace(pkg)}%{ endfor }
-
+packages:
+%{ for pkg in split(",", cloud_init_packages) ~}
+  - ${trimspace(pkg)}
+%{ endfor ~}
 write_files:
   - path: /etc/doas.conf
     content: |
