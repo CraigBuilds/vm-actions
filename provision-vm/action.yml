@@ -53,6 +53,10 @@ inputs:
     description: 'Command to shut down the VM (varies by OS, e.g., "doas /sbin/poweroff" for Alpine, "sudo shutdown -P now" for Ubuntu)'
     required: false
     default: 'echo "Packer shutdown triggered"'
+  cloud_init_packages:
+    description: 'Comma-separated list of packages to install via cloud-init (e.g., "doas" for Alpine, "sudo" for Ubuntu, or "sudo,vim" for multiple packages). Single values are allowed.'
+    required: false
+    default: 'sudo'
 
 runs:
   using: 'composite'
@@ -142,6 +146,7 @@ runs:
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
           -var "user_groups=${{ inputs.user_groups }}" \
           -var "shutdown_command=${{ inputs.shutdown_command }}" \
+          -var "cloud_init_packages=${{ inputs.cloud_init_packages }}" \
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           ${{ github.action_path }}/../template.pkr.hcl
 
@@ -168,6 +173,7 @@ runs:
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
           -var "user_groups=${{ inputs.user_groups }}" \
           -var "shutdown_command=${{ inputs.shutdown_command }}" \
+          -var "cloud_init_packages=${{ inputs.cloud_init_packages }}" \
           -var "inline_provision_commands=$INLINE_PROVISION_COMMANDS" \
           ${{ github.action_path }}/../template.pkr.hcl
 
@@ -192,6 +198,7 @@ runs:
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
           -var "user_groups=${{ inputs.user_groups }}" \
           -var "shutdown_command=${{ inputs.shutdown_command }}" \
+          -var "cloud_init_packages=${{ inputs.cloud_init_packages }}" \
           -var "input_provision_script=${{ inputs.input_provision_script }}" \
           ${{ github.action_path }}/../template.pkr.hcl
 
@@ -218,6 +225,7 @@ runs:
           -var "ssh_private_key_file=${SSH_PRIVATE_KEY_FILE}" \
           -var "user_groups=${{ inputs.user_groups }}" \
           -var "shutdown_command=${{ inputs.shutdown_command }}" \
+          -var "cloud_init_packages=${{ inputs.cloud_init_packages }}" \
           -var "inline_provision_commands=$INLINE_PROVISION_COMMANDS" \
           ${{ github.action_path }}/../template.pkr.hcl
 
